@@ -131,8 +131,11 @@ at:
 ## 5. License
 
 ![CC BY-SA 4.0](https://i.creativecommons.org/l/by-sa/4.0/88x31.png)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ftrk9001%2Ffillsheet.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ftrk9001%2Ffillsheet?ref=badge_shield)
 
 © 2018 by [trk9001](mailto:dev.trk.9001@gmail.com).
 This project is licensed under a Creative Commons Attribution-ShareAlike 4.0
 International License:
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0).
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ftrk9001%2Ffillsheet.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ftrk9001%2Ffillsheet?ref=badge_large)
