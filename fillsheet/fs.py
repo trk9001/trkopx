@@ -43,18 +43,18 @@ class FillSheet:
             self.file = file
 
         # A struct for the `self.rows` data
-        class _Rows:
+        class Rows:
             pass
 
         # Validate and set the range of rows
         if rows is None:
-            self.rows = _Rows()
-            self.rows.start = 1
+            self.rows = Rows()
+            self.rows.start = 2
             self.rows.end = self._get_rows_from_file(self.file)
         elif isinstance(rows, str) and re.match(r'^\d*:\d*$', rows):
-            self.rows = _Rows()
+            self.rows = Rows()
             row_start, row_end = tuple(rows.split(':'))
-            self.rows.start = 1 if row_start == '' else int(row_start)
+            self.rows.start = 2 if row_start == '' else int(row_start)
             self.rows.end = 0 if row_end == '' else int(row_end)
             max_rows = self._get_rows_from_file(self.file)
             if self.rows.end == 0 or self.rows.end > max_rows:
