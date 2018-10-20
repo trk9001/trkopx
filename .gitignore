@@ -100,6 +100,8 @@ ENV/
 # mypy
 .mypy_cache/
 
+# PyCharm project settings
 .idea/
-*.xlsx
+
+# venv activation script
 activate
