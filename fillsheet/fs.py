@@ -88,3 +88,11 @@ class FillSheet:
         for col in range(2, 10):
             if ws.cell(row=1, column=col).value == 'MANUFACTURER':
                 return col
+
+    def half_fill(self):
+        """Generate boilerplate text in the second description column."""
+        pass
+
+    def full_fill(self):
+        """Generate full descriptions in the first column."""
+        pass
