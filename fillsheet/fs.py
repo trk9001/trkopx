@@ -44,19 +44,21 @@ class FillSheet:
 
         # A struct for the `self.rows` data
         class Rows:
-            pass
+            def __init__(self):
+                self.start = None
+                self.end = None
 
         # Validate and set the range of rows
         if rows is None:
             self.rows = Rows()
             self.rows.start = 2
-            self.rows.end = self._get_rows_from_file(self.file)
+            self.rows.end = self.get_number_of_rows(self.file)
         elif isinstance(rows, str) and re.match(r'^\d*:\d*$', rows):
             self.rows = Rows()
             row_start, row_end = tuple(rows.split(':'))
             self.rows.start = 2 if row_start == '' else int(row_start)
             self.rows.end = 0 if row_end == '' else int(row_end)
-            max_rows = self._get_rows_from_file(self.file)
+            max_rows = self.get_number_of_rows(self.file)
             if self.rows.end == 0 or self.rows.end > max_rows:
                 self.rows.end = max_rows
             if self.rows.start > self.rows.end:
@@ -67,18 +69,18 @@ class FillSheet:
                             'Must be empty or of the form START:END')
 
         # Set the seed column index
-        self.seed = self._get_manufacturer_column_index(self.file)
+        self.seed = self.get_manufacturer_column_index(self.file)
         if self.seed is None:
             raise ValueError('MANUFACTURER COLUMN\'S INDEX NOT FOUND')
 
     @staticmethod
-    def _get_rows_from_file(file):
+    def get_number_of_rows(file):
         """Return the number of rows in a worksheet."""
         wb = load_workbook(file)
         return len(list(wb.active.rows))
 
     @staticmethod
-    def _get_manufacturer_column_index(file):
+    def get_manufacturer_column_index(file):
         """Return the index of the Manufacturer column in a worksheet."""
         wb = load_workbook(file)
         ws = wb.active
@@ -91,8 +93,53 @@ class FillSheet:
 
     def half_fill(self):
         """Generate boilerplate text in the second description column."""
-        pass
+
+        # Set column numbers sequentially from the seed value, for columns:
+        # manufacturer, product, colour, fulldescr1 and fulldescr2.
+        mnf, pdt, clr, dc1, dc2 = (self.seed + i for i in range(5))
+
+        wb = load_workbook(self.file)
+        ws = wb.active
+
+        # In every iteration of the loop, the next value of the 'product'
+        # column is checked against its current value, so set it to None
+        # initially.
+        pdt_val = None
+
+        i = self.rows.start - 1
+
+        while i < self.rows.end:
+            i += 1
+
+            # If there is any text in the second description column, move
+            # it to the first description column.
+            if ws.cell(i, dc2).value:
+                tmp = ws.cell(i, dc1).value
+                if tmp is None: tmp = ''
+                ws.cell(i, dc1).value = tmp + '; ' + ws.cell(i, dc2).value
+                ws.cell(i, dc2).value = None
+
+            # Skip duplicates of the last product
+            if ws.cell(i, pdt).value == pdt_val:
+                continue
+
+            mnf_val, pdt_val, clr_val = (ws.cell(i, col).value
+                                         for col in [mnf, pdt, clr])
+            descr = 'The {} from {} comes in {} colour, featuring'.format(
+                    pdt_val, mnf_val, clr_val
+            )
+
+            self.format_cell(ws.cell(i, dc2))
+            ws.cell(i, dc2).value = descr
+
+        wb.save(self.file)
 
     def full_fill(self):
         """Generate full descriptions in the first column."""
         pass
+
+    @staticmethod
+    def format_cell(cell):
+        """Formats a cell from a worksheet opened using openpyxl."""
+        cell.alignment = Alignment(horizontal='left', wrap_text=True)
+        cell.font = Font(name='Calibri', size=8)
