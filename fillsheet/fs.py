@@ -102,18 +102,18 @@ class FillSheet:
         # The Manufacturer column is usually among the first ones,
         # barring the very first column.
         for col in range(2, 10):
-            if ws.cell(row=1, column=col).value == 'MANUFACTURER':
+            if ws.cell(1, col).value == 'MANUFACTURER':
                 return col
 
     def half_fill(self):
         """Generate boilerplate text in the second description column."""
 
+        wb = load_workbook(self.file)
+        ws = wb.active
+
         # Set column numbers sequentially from the seed value, for columns:
         # manufacturer, product, colour, fulldescr1 and fulldescr2.
         mnf, pdt, clr, dc1, dc2 = (self.seed + i for i in range(5))
-
-        wb = load_workbook(self.file)
-        ws = wb.active
 
         i = self.rows.start - 1
 
@@ -129,7 +129,7 @@ class FillSheet:
                 ws.cell(i, dc2).value = None
 
             # Skip consecutive duplicates of the last product
-            if ws.cell(i, pdt).value == ws.cell(i-1, pdt).value:
+            if ws.cell(i, pdt).value == ws.cell(i - 1, pdt).value:
                 continue
 
             # Construct a description from the columns' data, format the cell
@@ -144,7 +144,66 @@ class FillSheet:
 
     def full_fill(self):
         """Generate full descriptions in the first column."""
-        pass
+
+        wb = load_workbook(self.file)
+        ws = wb.active
+
+        # Set column numbers sequentially from the seed value, for columns:
+        # manufacturer, product, colour, fulldescr1 and fulldescr2.
+        mnf, pdt, clr, dc1, dc2 = (self.seed + i for i in range(5))
+
+        # Reset variables used for repetition checking
+        mnf_val = pdt_val = clr_val = None
+        times_repeated = 0
+
+        i = self.rows.start - 1
+
+        while i < self.rows.end:
+            i += 1
+
+            # Manual skip condition
+            if ('SKIP' in ws.cell(i, dc1).value
+                    or 'SKIP' in ws.cell(i, dc2)):
+                continue
+
+            # If the current product has been repeated consecutively
+            if ws.cell(i, pdt).value == pdt_val:
+                new_clr_val = ws.cell(i, clr).value
+                if times_repeated == 0 or times_repeated == 2:
+                    new_dc1 = (ws.cell(i - 1, dc2).value
+                               .replace(clr_val,new_clr_val))
+                    new_dc2 = (ws.cell(i - 1, dc1).value
+                               .replace(clr_val, new_clr_val))
+                elif times_repeated == 1:
+                    new_dc1 = (ws.cell(i - 2, dc1).value
+                               .replace('From {} comes'.format(mnf_val),
+                                        '{} offers'.format(mnf_val))
+                               .replace(clr_val, new_clr_val))
+                    new_dc2 = (ws.cell(i - 2, dc2).value
+                               .replace('The {} from {}'
+                                        .format(pdt_val, mnf_val),
+                                        'Offered by {}, the {}'
+                                        .format(mnf_val, pdt_val))
+                               .replace(clr_val, new_clr_val))
+                elif times_repeated == 3:
+                    new_dc1 = (ws.cell(i - 4, dc1).value
+                               .replace(clr_val, new_clr_val))
+                    new_dc2 = (ws.cell(i - 4, dc2).value
+                               .replace(clr_val, new_clr_val))
+                    # Repeat the cycle in case of more recurrences
+                    times_repeated = 0
+                else:
+                    # Probably not going to reach here
+                    continue
+
+                self.format_cell(ws.cell(i, dc1))
+                ws.cell(i, dc1).value = new_dc1
+                self.format_cell(ws.cell(i, dc2))
+                ws.cell(i, dc2).value = new_dc2
+
+                times_repeated += 1
+
+            # Regular case (non-repeated)
 
     @staticmethod
     def format_cell(cell):
