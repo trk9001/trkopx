@@ -115,11 +115,6 @@ class FillSheet:
         wb = load_workbook(self.file)
         ws = wb.active
 
-        # In every iteration of the loop, the next value of the 'product'
-        # column is checked against its current value, so set it to None
-        # initially.
-        pdt_val = None
-
         i = self.rows.start - 1
 
         while i < self.rows.end:
@@ -133,16 +128,15 @@ class FillSheet:
                 ws.cell(i, dc1).value = tmp + '; ' + ws.cell(i, dc2).value
                 ws.cell(i, dc2).value = None
 
-            # Skip duplicates of the last product
-            if ws.cell(i, pdt).value == pdt_val:
+            # Skip consecutive duplicates of the last product
+            if ws.cell(i, pdt).value == ws.cell(i-1, pdt).value:
                 continue
 
-            mnf_val, pdt_val, clr_val = (ws.cell(i, col).value
-                                         for col in [mnf, pdt, clr])
+            # Construct a description from the columns' data, format the cell
+            # and save it.
             descr = 'The {} from {} comes in {} colour, featuring'.format(
-                    pdt_val, mnf_val, clr_val
+                    *[ws.cell(i, col).value for col in [pdt, mnf, clr]]
             )
-
             self.format_cell(ws.cell(i, dc2))
             ws.cell(i, dc2).value = descr
 
