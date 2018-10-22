@@ -32,6 +32,7 @@ class FillSheet:
         self.file = None
         self.rows = None
         self.seed = None
+        self.max_rows = None
 
         # Validate and set the file name
         if '.xlsx' not in file:
@@ -48,30 +49,43 @@ class FillSheet:
                 self.start = None
                 self.end = None
 
-        # Validate and set the range of rows
+        self.max_rows = self.get_number_of_rows(self.file)
+
+        # Set the range of rows
+        self.rows = Rows()
         if rows is None:
-            self.rows = Rows()
             self.rows.start = 2
-            self.rows.end = self.get_number_of_rows(self.file)
-        elif isinstance(rows, str) and re.match(r'^\d*:\d*$', rows):
-            self.rows = Rows()
-            row_start, row_end = tuple(rows.split(':'))
-            self.rows.start = 2 if row_start == '' else int(row_start)
-            self.rows.end = 0 if row_end == '' else int(row_end)
-            max_rows = self.get_number_of_rows(self.file)
-            if self.rows.end == 0 or self.rows.end > max_rows:
-                self.rows.end = max_rows
-            if self.rows.start > self.rows.end:
-                raise ValueError('INVALID VALUE FOR ROWS: '
-                                 'START must be less than END')
+            self.rows.end = self.max_rows
         else:
-            raise TypeError('INVALID TYPE FOR ROWS: '
-                            'Must be empty or of the form START:END')
+            self.config_rows(rows)
 
         # Set the seed column index
         self.seed = self.get_manufacturer_column_index(self.file)
         if self.seed is None:
             raise ValueError('MANUFACTURER COLUMN\'S INDEX NOT FOUND')
+
+    def config_rows(self, rows):
+        """Set the range of rows from a string."""
+
+        if isinstance(rows, str) and re.match(r'^\d*:\d*$', rows):
+            row_values = rows.split(':')
+            if row_values[0]:
+                self.rows.start = int(row_values[0])
+            else:
+                self.rows.start = 2
+            if row_values[1]:
+                self.rows.end = int(row_values[1])
+                if self.rows.end > self.max_rows:
+                    self.rows.end = self.max_rows
+            else:
+                self.rows.end = self.max_rows
+
+            if self.rows.start > self.rows.end:
+                raise ValueError('INVALID VALUE FOR ROWS: '
+                                 'START must be less than END')
+        else:
+            raise TypeError('INVALID TYPE FOR ROWS: '
+                            'Must be empty or of the form "START:END"')
 
     @staticmethod
     def get_number_of_rows(file):
