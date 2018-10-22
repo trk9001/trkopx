@@ -3,6 +3,8 @@
 import os
 import shutil
 
+import pytest
+
 from fillsheet import FillSheet
 from openpyxl import load_workbook
 
@@ -17,6 +19,42 @@ def test_get_number_of_rows():
 
 def test_get_manufacturer_column_index():
     assert FillSheet.get_manufacturer_column_index(file_name) == 4
+
+
+def test_config_rows_1():
+    fs = FillSheet(file_name)
+    fs.config_rows('3:10')
+    assert fs.rows.start == 3 and fs.rows.end == 10
+
+
+def test_config_rows_2():
+    fs = FillSheet(file_name)
+    fs.config_rows('3:20')
+    assert fs.rows.start == 3 and fs.rows.end == 15
+
+
+def test_config_rows_3():
+    fs = FillSheet(file_name)
+    fs.config_rows(':10')
+    assert fs.rows.start == 2 and fs.rows.end == 10
+
+
+def test_config_rows_4():
+    fs = FillSheet(file_name)
+    fs.config_rows(':')
+    assert fs.rows.start == 2 and fs.rows.end == 15
+
+
+def test_config_rows_start_gt_end_exception():
+    with pytest.raises(ValueError):
+        fs = FillSheet(file_name)
+        fs.config_rows('10:3')
+
+
+def test_config_rows_bad_format_exception():
+    with pytest.raises(TypeError):
+        fs = FillSheet(file_name)
+        fs.config_rows([3, 10])
 
 
 def test_half_fill():
