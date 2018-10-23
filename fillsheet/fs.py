@@ -13,7 +13,7 @@ from openpyxl.styles import Alignment, Font
 
 
 class FillSheet:
-    
+
     DEFAULT_FILE = 'Descr.xlsx'
 
     def __init__(self, file=DEFAULT_FILE, rows=None):
@@ -124,7 +124,8 @@ class FillSheet:
             # it to the first description column.
             if ws.cell(i, dc2).value:
                 tmp = ws.cell(i, dc1).value
-                if tmp is None: tmp = ''
+                if tmp is None:
+                    tmp = ''
                 ws.cell(i, dc1).value = tmp + '; ' + ws.cell(i, dc2).value
                 ws.cell(i, dc2).value = None
 
@@ -148,6 +149,16 @@ class FillSheet:
         wb = load_workbook(self.file)
         ws = wb.active
 
+        # Compiled regex objects
+        rgx1 = re.compile(r'featuring.*$')
+        rgx2 = re.compile(r'featuring ([^.]*)[.]')
+        rgx3 = re.compile(r'sports? (.*)[.]$')
+
+        # Manual control codes
+        code_skip = 'SKIP'
+        code_skip_reset = 'RESET'
+        code_skip_note = 'EZPZ'
+
         # Set column numbers sequentially from the seed value, for columns:
         # manufacturer, product, colour, fulldescr1 and fulldescr2.
         mnf, pdt, clr, dc1, dc2 = (self.seed + i for i in range(5))
@@ -162,8 +173,14 @@ class FillSheet:
             i += 1
 
             # Manual skip condition
-            if ('SKIP' in ws.cell(i, dc1).value
-                    or 'SKIP' in ws.cell(i, dc2)):
+            if (code_skip in ws.cell(i, dc1).value
+                    or code_skip in ws.cell(i, dc2)):
+                continue
+
+            # Manual recurrence reset condition
+            if (code_skip_reset in ws.cell(i, dc1).value
+                    or code_skip_reset in ws.cell(i, dc2)):
+                pdt_val = None
                 continue
 
             # If the current product has been repeated consecutively
@@ -171,7 +188,7 @@ class FillSheet:
                 new_clr_val = ws.cell(i, clr).value
                 if times_repeated == 0 or times_repeated == 2:
                     new_dc1 = (ws.cell(i - 1, dc2).value
-                               .replace(clr_val,new_clr_val))
+                               .replace(clr_val, new_clr_val))
                     new_dc2 = (ws.cell(i - 1, dc1).value
                                .replace(clr_val, new_clr_val))
                 elif times_repeated == 1:
@@ -191,7 +208,7 @@ class FillSheet:
                     new_dc2 = (ws.cell(i - 4, dc2).value
                                .replace(clr_val, new_clr_val))
                     # Repeat the cycle in case of more recurrences
-                    times_repeated = 0
+                    times_repeated = -1
                 else:
                     # Probably not going to reach here
                     continue
@@ -204,6 +221,42 @@ class FillSheet:
                 times_repeated += 1
 
             # Regular case (non-repeated)
+            else:
+                times_repeated = 0
+
+                # Typical second description generation
+                part1 = 'From {} comes the {} in {} colour, '.format(
+                        *[ws.cell(i, col).value for col in [mnf, pdt, clr]]
+                )
+                try:
+                    part2 = rgx1.search(ws.cell(i, dc2).value).group(0)
+                except AttributeError:
+                    raise ValueError('"FEATURING" CLAUSE NOT FOUND: '
+                                     'In row {}'.format(i))
+                descr = part1 + part2
+
+                # Modifications in absence of ending note
+                if ws.cell(i, dc1).value == code_skip_note:
+                    pass
+                else:
+                    try:
+                        featuring_clause = rgx2.search(descr).group(1)
+                        sports_clause = rgx3.search(descr).group(1)
+                    except AttributeError:
+                        raise ValueError('CLAUSE NOT FOUND: '
+                                         'In row {}'.format(i))
+                    except IndexError:
+                        raise ValueError('SUB-CLAUSE EMPTY: '
+                                         'In row {}'.format(i))
+
+                    descr = descr.replace(sports_clause, '!TEMP!')
+                    descr = descr.replace(featuring_clause, sports_clause)
+                    descr = descr.replace('!TEMP!', sports_clause)
+
+                self.format_cell(ws.cell(i, dc1))
+                ws.cell(i, dc1).value = descr
+
+        wb.save(self.file)
 
     @staticmethod
     def format_cell(cell):
