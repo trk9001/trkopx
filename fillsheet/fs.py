@@ -174,12 +174,12 @@ class FillSheet:
 
             # Manual skip condition
             if (code_skip in ws.cell(i, dc1).value
-                    or code_skip in ws.cell(i, dc2)):
+                    or code_skip in ws.cell(i, dc2).value):
                 continue
 
             # Manual recurrence reset condition
             if (code_skip_reset in ws.cell(i, dc1).value
-                    or code_skip_reset in ws.cell(i, dc2)):
+                    or code_skip_reset in ws.cell(i, dc2).value):
                 pdt_val = None
                 continue
 
@@ -251,7 +251,7 @@ class FillSheet:
 
                     descr = descr.replace(sports_clause, '!TEMP!')
                     descr = descr.replace(featuring_clause, sports_clause)
-                    descr = descr.replace('!TEMP!', sports_clause)
+                    descr = descr.replace('!TEMP!', featuring_clause)
 
                 self.format_cell(ws.cell(i, dc1))
                 ws.cell(i, dc1).value = descr
