@@ -71,3 +71,35 @@ def test_half_fill():
             'Limited Edition Trunks', 'Calvin Klein', 'Camo Print Black'
     )
     assert descr == expected_descr
+
+
+def test_full_fill():
+    shutil.copy(file_name, dummy_file)
+    fs = FillSheet(dummy_file, ':3')
+    fs.half_fill()
+
+    wb = load_workbook(dummy_file)
+    ws = wb.active
+    ws.cell(2, 8).value += (' THESE FEATURES. This item also sports THESE '
+                            'PROPERTIES.')
+    ws.cell(3, 8).value += ' THESE FEATURES. Note: Blah blah.'
+    ws.cell(3, 7).value = 'EZPZ'
+    wb.save(dummy_file)
+
+    fs.full_fill()
+
+    wb = load_workbook(dummy_file)
+    ws = wb.active
+    descr1 = ws.cell(2, 7).value
+    descr2 = ws.cell(3, 7).value
+    os.remove(dummy_file)
+
+    expected_descr1 = (('From {} comes the {} in {} colour, featuring THESE '
+                        'PROPERTIES. This item also sports THESE FEATURES.')
+                       .format('Calvin Klein', 'Limited Edition Trunks',
+                               'Camo Print Black'))
+    expected_descr2 = (('From {} comes the {} in {} colour, featuring THESE '
+                        'FEATURES. Note: Blah blah.')
+                       .format('Converse', 'CT All Star Hi Leather Trainers',
+                               'Teak/Black/Driftwood'))
+    assert descr1 == expected_descr1 and descr2 == expected_descr2
