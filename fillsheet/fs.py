@@ -228,9 +228,14 @@ class FillSheet:
             else:
                 times_repeated = 0
 
+                # Necessary to check for repetitions
+                mnf_val = ws.cell(i, mnf).value
+                pdt_val = ws.cell(i, pdt).value
+                clr_val = ws.cell(i, clr).value
+
                 # Typical second description generation
                 part1 = 'From {} comes the {} in {} colour, '.format(
-                        *[ws.cell(i, col).value for col in [mnf, pdt, clr]]
+                        mnf_val, pdt_val, clr_val
                 )
                 try:
                     part2 = rgx1.search(ws.cell(i, dc2).value).group(0)
