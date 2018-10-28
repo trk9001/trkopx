@@ -73,6 +73,28 @@ def test_half_fill():
     assert descr == expected_descr
 
 
+def test_half_fill_recurrences():
+    wb = load_workbook(file_name)
+    ws = wb.active
+    ws.cell(3, 4).value = ws.cell(2, 4).value
+    ws.cell(3, 5).value = ws.cell(2, 5).value
+    wb.save(dummy_file)
+
+    fs = FillSheet(dummy_file, ':3')
+    fs.half_fill()
+
+    wb = load_workbook(dummy_file)
+    ws = wb.active
+    descr1 = ws.cell(2, 8).value
+    descr2 = ws.cell(3, 8).value
+    os.remove(dummy_file)
+
+    expected_descr1 = 'The {} from {} comes in {} colour, featuring'.format(
+            'Limited Edition Trunks', 'Calvin Klein', 'Camo Print Black'
+    )
+    assert descr1 == expected_descr1 and descr2 is None
+
+
 def test_full_fill():
     shutil.copy(file_name, dummy_file)
     fs = FillSheet(dummy_file, ':3')
@@ -102,4 +124,47 @@ def test_full_fill():
                         'FEATURES. Note: Blah blah.')
                        .format('Converse', 'CT All Star Hi Leather Trainers',
                                'Teak/Black/Driftwood'))
+    assert descr1 == expected_descr1 and descr2 == expected_descr2
+
+
+def test_full_fill_skips():
+    wb = load_workbook(file_name)
+    ws = wb.active
+    ws.cell(2, 7).value = 'SKIP'
+    wb.save(dummy_file)
+
+    fs = FillSheet(dummy_file, ':2')
+    fs.full_fill()
+
+    wb = load_workbook(dummy_file)
+    ws = wb.active
+    descr = ws.cell(2, 7).value
+    os.remove(dummy_file)
+
+    assert descr == 'SKIP'
+
+
+def test_full_fill_recurrences():
+    wb = load_workbook(file_name)
+    ws = wb.active
+    ws.cell(3, 4).value = ws.cell(2, 4).value
+    ws.cell(3, 5).value = ws.cell(2, 5).value
+    ws.cell(2, 8).value = ('The Limited Edition Trunks from Calvin Klein '
+                           'comes in Camo Print Black colour, featuring THESE '
+                           'FEATURES. This item also sports THESE PROPERTIES.')
+    wb.save(dummy_file)
+
+    fs = FillSheet(dummy_file, ':3')
+    fs.full_fill()
+
+    wb = load_workbook(dummy_file)
+    ws = wb.active
+    descr1 = ws.cell(3, 7).value
+    descr2 = ws.cell(3, 8).value
+    expected_descr1 = ws.cell(2, 8).value.replace('Camo Print Black',
+                                                  'Teak/Black/Driftwood')
+    expected_descr2 = ws.cell(2, 7).value.replace('Camo Print Black',
+                                                  'Teak/Black/Driftwood')
+    os.remove(dummy_file)
+
     assert descr1 == expected_descr1 and descr2 == expected_descr2
