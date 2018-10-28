@@ -173,13 +173,17 @@ class FillSheet:
             i += 1
 
             # Manual skip condition
-            if (code_skip in ws.cell(i, dc1).value
-                    or code_skip in ws.cell(i, dc2).value):
+            if ((ws.cell(i, dc1).value
+                 and code_skip in ws.cell(i, dc1).value)
+                    or (ws.cell(i, dc2).value
+                        and code_skip in ws.cell(i, dc2).value)):
                 continue
 
             # Manual recurrence reset condition
-            if (code_skip_reset in ws.cell(i, dc1).value
-                    or code_skip_reset in ws.cell(i, dc2).value):
+            if ((ws.cell(i, dc1).value
+                 and code_skip_reset in ws.cell(i, dc1).value)
+                    or (ws.cell(i, dc2).value
+                        and code_skip_reset in ws.cell(i, dc2).value)):
                 pdt_val = None
                 continue
 
